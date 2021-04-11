@@ -675,7 +675,7 @@ void client::update_save_info()
 {
     std::vector<string> save_files = find_rom_save_files(me->rom.name);
     if (save_files.size() == 0)
-        my_dialog->info("Save Data is empty, you'll need to savesync with another player");
+        my_dialog->info("Save Data is empty, will be synced with host.");
 
     std::sort(save_files.begin(), save_files.end());
 
