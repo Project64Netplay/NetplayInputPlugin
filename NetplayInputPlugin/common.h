@@ -15,9 +15,12 @@ enum packet_type : uint8_t {
     PONG,
     QUIT,
     NAME,
+    SAVE_INFO,
+    ROOM_CHECK,
     LATENCY,
     MESSAGE,
     LAG,
+    SAVE_SYNC,
     AUTOLAG,
     CONTROLLERS,
     START,
@@ -29,9 +32,9 @@ enum packet_type : uint8_t {
 };
 
 enum pak_type : int {
-    NONE     = 1,
-    MEMORY   = 2,
-    RUMBLE   = 3,
+    NONE = 1,
+    MEMORY = 2,
+    RUMBLE = 3,
     TRANSFER = 4
 };
 
@@ -41,32 +44,32 @@ enum application : uint8_t {
 
 enum message_type : uint32_t {
     ERROR_MSG = 0xFFFFFFFE,
-    INFO_MSG  = 0xFFFFFFFF
+    INFO_MSG = 0xFFFFFFFF
 };
 
 // http://en64.shoutwiki.com/wiki/ROM
 enum country_code : char {
-    UNKNOWN             = '\0',
-    BETA                = '7',
-    ASIAN               = 'A',
-    BRAZILIAN           = 'B',
-    CHINESE             = 'C',
-    GERMAN              = 'D',
-    NORTH_AMERICAN      = 'E',
-    FRENCH              = 'F',
-    GATEWAY_64_NTSC     = 'G',
-    DUTCH               = 'H',
-    ITALIAN             = 'I',
-    JAPANESE            = 'J',
-    KOREAN              = 'K',
-    GATEWAY_64_PAL      = 'L',
-    CANADIAN            = 'N',
+    UNKNOWN = '\0',
+    BETA = '7',
+    ASIAN = 'A',
+    BRAZILIAN = 'B',
+    CHINESE = 'C',
+    GERMAN = 'D',
+    NORTH_AMERICAN = 'E',
+    FRENCH = 'F',
+    GATEWAY_64_NTSC = 'G',
+    DUTCH = 'H',
+    ITALIAN = 'I',
+    JAPANESE = 'J',
+    KOREAN = 'K',
+    GATEWAY_64_PAL = 'L',
+    CANADIAN = 'N',
     EUROPEAN_BASIC_SPEC = 'P',
-    SPANISH             = 'S',
-    AUSTRALIAN          = 'U',
-    SCANDINAVIAN        = 'W',
-    EUROPEAN_X          = 'X',
-    EUROPEAN_Y          = 'Y'
+    SPANISH = 'S',
+    AUSTRALIAN = 'U',
+    SCANDINAVIAN = 'W',
+    EUROPEAN_X = 'X',
+    EUROPEAN_Y = 'Y'
 };
 
 class service_wrapper {
@@ -238,9 +241,38 @@ inline controller packet::read<controller>() {
     return c;
 }
 
+
+struct save_info {
+    std::string rom_name;
+    std::string save_name;
+    std::string save_data;
+    std::string sha1_data;
+};
+
+template<>
+inline save_info packet::read<save_info>() {
+    save_info saveInfo;
+    saveInfo.rom_name = read<std::string>();
+    saveInfo.save_name = read<std::string>();
+    saveInfo.save_data = read<std::string>();
+    saveInfo.sha1_data = read<std::string>();
+    return saveInfo;
+}
+
+template<>
+inline packet& packet::write<save_info>(save_info saveInfo) {
+    write(saveInfo.rom_name);
+    write(saveInfo.save_name);
+    write(saveInfo.save_data);
+    write(saveInfo.sha1_data);
+    return *this;
+}
+
 struct user_info {
     std::string name;
+    std::string favorite_server;
     rom_info rom;
+    std::array<save_info, 5> saves;
     uint8_t lag = 5;
     double latency = NAN;
     std::array<controller, 4> controllers;
@@ -263,10 +295,16 @@ struct user_info {
     }
 };
 
+
 template<>
 inline packet& packet::write<user_info>(user_info info) {
     write(info.name);
     write(info.rom);
+    write(info.saves[0]);
+    write(info.saves[1]);
+    write(info.saves[2]);
+    write(info.saves[3]);
+    write(info.saves[4]);
     write(info.lag);
     write(info.latency);
     write(info.controllers[0]);
@@ -284,6 +322,11 @@ inline user_info packet::read<user_info>() {
     user_info info;
     info.name = read<std::string>();
     info.rom = read<rom_info>();
+    info.saves[0] = read<save_info>();
+    info.saves[1] = read<save_info>();
+    info.saves[2] = read<save_info>();
+    info.saves[3] = read<save_info>();
+    info.saves[4] = read<save_info>();
     info.lag = read<uint8_t>();
     info.latency = read<double>();
     info.controllers[0] = read<controller>();
@@ -303,10 +346,12 @@ std::string endpoint_to_string(const asio::ip::basic_endpoint<InternetProtocol>&
         auto v6_address = endpoint.address().to_v6();
         if (v6_address.is_v4_mapped()) {
             result = make_address_v4(asio::ip::v4_mapped, v6_address).to_string();
-        } else {
+        }
+        else {
             result = "[" + v6_address.to_string() + "]";
         }
-    } else {
+    }
+    else {
         result = endpoint.address().to_string();
     }
     if (include_port) {

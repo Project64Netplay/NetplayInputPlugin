@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <ctime>
 #include <exception>
+#include <fstream>
 #include <functional>
 #include <future>
 #include <iomanip>
@@ -26,6 +27,7 @@
 #include <memory>
 #include <mutex>
 #include <random>
+#include <regex>
 #include <string>
 #include <thread>
 #include <unordered_map>
