@@ -95,7 +95,7 @@ bool client::input_detected(const input_data& input, uint32_t mask) {
 }
 
 void client::load_public_server_list() {
-    constexpr static char API_HOST[] = "api.play64.com";
+    constexpr static char API_HOST[] = "cdn.marioparty.online";
 
     service.post([&] {
         ip::tcp::resolver tcp_resolver(service);
