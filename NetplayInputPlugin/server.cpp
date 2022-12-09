@@ -132,9 +132,7 @@ void server::on_user_join(user* user, string room_id) {
 
     if (rooms.find(room_id) == rooms.end()) {
         rooms[room_id] = make_shared<room>(room_id, this, user->rom);
-        log("[" + room_id + "] " + user->name + " created room");
         log("[" + room_id + "] " + user->name + " set game to " + user->rom.to_string());
-        log_room_list();
     }
 
     rooms[room_id]->on_user_join(user);
